@@ -36,10 +36,10 @@ class ReminderTagger{
         try
         {
             if($customer->_Products){
-                return str_split($customer->_Products);
+                return explode(',',$customer->_Products);
             }
         }catch(\Exception $e){
-            Log::error($e->getMessage());
+            Log::error($e->getMessage() . __LINE__);
         }
     }
 
@@ -64,8 +64,8 @@ class ReminderTagger{
                 $customer =  new Contact($customer);
             }
         }catch(\Exception $e){
-            Log::error($e->getMessage());
-            return $this->apiResponse("An error occured " . $e->getMessage(), false);
+            Log::error($e->getMessage() . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
         }
 
         if($customer == null){
@@ -76,8 +76,8 @@ class ReminderTagger{
         try{        
             $courses = $this->getCustomerCourses($customer); //returns array of strings
         }catch(\Exception $e){
-            Log::error($e->getMessage());
-            return $this->apiResponse("An error occured " . $e->getMessage(), false);
+            Log::error($e->getMessage() . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
         }
 
         if($courses == null){
@@ -91,15 +91,14 @@ class ReminderTagger{
         $last_completed_course = null; //we will set this to true if a course is found to be completed : all its modules taken or last module taken
 
         foreach ($courses as $course) {
-            return $course;
             //if each course had a completed flag it would really optimize this process
             //if($course->completed){ continue; }
             $modules =  null;
             try{
                 $modules = Module::where('course_key', $course)->get(); //$course->modules;
             }catch(\Exception $e){
-                Log::error($e->getMessage());
-                return $this->apiResponse("An error occured " . $e->getMessage(), false);
+                Log::error($e->getMessage() . __LINE__);
+                return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
             }
             //you might need to fetch each module from the database depending on if its a list of ids
             if($modules == null){
@@ -110,7 +109,7 @@ class ReminderTagger{
             $uncompleted_module_count = 0;
             
             //start from the end since we need the last completed module to determine the next module
-            for( $i = $module_count; $i >= 0; $i--){ //$i > 0 would means it wont reach the last item
+            for( $i = $module_count -1; $i >= 0; $i--){ //$i > 0 would means it wont reach the last item
                 /** Convert this into a function if u can */
                 $module = $modules[$i]; //current module
                 if($i > 0){
@@ -119,7 +118,7 @@ class ReminderTagger{
                 if($module != null and $module->completed){
                     $started = true;
 
-                    if($i == $module_count){//if the last module has been completed
+                    if($i == $module_count-1){//if the last module has been completed
                         $last_completed_course = $course; //why are we doing this? //we should store it maybe
                         $total_number_of_completed_courses++;
                          //according to the rules, since the last module has been treated, we have to move on to the next course
@@ -132,8 +131,8 @@ class ReminderTagger{
                             $tag = $this->getTag($next_uncompleted_module, $course);
                             $customer = $this->setTag($customer, $tag);
                         }catch(\Exception $e){
-                            Log::error($e->getMessage());
-                            return $this->apiResponse("An error occured " . $e->getMessage(), false);
+                            Log::error($e->getMessage() . __LINE__);
+                            return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
                         }
                         return $this->apiResponse("Reminder set successfully", true);
                         //Stop all processing and return the tagging result 
@@ -152,8 +151,8 @@ class ReminderTagger{
                     $tag = $this->getFirstTag();
                     $customer = $this->setTag($customer, $tag);
                 }catch(\Exception $e){
-                    Log::error($e->getMessage());
-                    return $this->apiResponse("An error occured " . $e->getMessage(), false);
+                    Log::error($e->getMessage() . __LINE__);
+                    return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
                 }
                 return $this->apiResponse("Reminder set successfully", true); //Stop all processing and return the result
                 
@@ -166,15 +165,18 @@ class ReminderTagger{
             $tag = $this->getCompletionTag();
             $customer = $this->setTag($customer, $tag);        
         }catch(\Exception $e){
-            Log::error($e->getMessage());
-            return $this->apiResponse("An error occured " . $e->getMessage(), false);
+            Log::error($e->getMessage() . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . __LINE__, false);
         }
         return $this->apiResponse("Reminder set successfully", true); //Stop all processing and return the result
     }
 
+    public function tagsDownloaded(){
+        $exists = Tag::where('id', '>', 0)->count() > 0;
+    }
+
     public function getCompletionTag(){
-        $exists = Tag::where('id', '>', 0)->exist();
-        if(!$exists){
+        if(!$this->tagsDownloaded()){
             //fetch and save
             $this->downloadAndSaveTags();
         }
@@ -198,7 +200,7 @@ class ReminderTagger{
     }
 
     public function getFirstTag(){
-        if(!$exists){
+        if(!$this->tagsDownloaded()){
             //fetch and save
             $this->downloadAndSaveTags();
         }
@@ -210,7 +212,7 @@ class ReminderTagger{
     }
 
     public function setTag($customer, $tag){
-        $infusionsoftHelper->addTag($customer->id, $tag->id);                                        
+        $this->infusionsoftHelper->addTag($customer->id, $tag->id);                                        
     }
 }
 
