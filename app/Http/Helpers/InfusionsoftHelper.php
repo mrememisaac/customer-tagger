@@ -6,9 +6,9 @@ use Infusionsoft;
 use Log;
 use Storage;
 use Request;
+use App\Http\Interfaces\InfusionSoftHelperInterface;
 
-
-class InfusionsoftHelper
+class InfusionsoftHelper implements InfusionSoftHelperInterface
 {
     private $infusionsoft;
 
