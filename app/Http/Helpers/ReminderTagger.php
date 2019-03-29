@@ -6,15 +6,17 @@ use Infusionsoft;
 use Log;
 use Storage;
 use Request;
+use \App\Tag;
 use \App\User;
 use \App\Course;
 use \App\Module;
+use App\Http\Interfaces\InfusionSoftHelperInterface;
 
 class ReminderTagger{
 
     private $infusionsoftHelper;
 
-    public function __construct(InfusionsoftHelper $helper){
+    public function __construct(InfusionSoftHelper $helper){
         $this->infusionsoftHelper = $helper;
     } 
 
@@ -22,42 +24,68 @@ class ReminderTagger{
      * Returns courses bought by this customer
      * I brought this out to its own function because the way we get courses ie products might change, 
      */
-    public function getCustomerCourses(User $customer){
-        if($customer == null) {
-            return null;
+    public function getCustomerCourses($customer){
+        //returns array of strings
+        // if($customer == null) {
+        //     return null;
+        // }
+        // return $customer->courses;
+        try
+        {
+            return $customer->products;
+        }catch(\Exception $e){
+            Log::error($e->getMessage());
         }
-        return $customer->courses;
     }
 
-    public function setReminderTags($email){
+    public function setReminderTag($email){
         //check if customer object is null
         if($email == null){
             return new ApiResponse(null, "Null customer sent", 404);
         }
         
         //check if customer exists in database using customer id
-        $customer = $infusionsoftHelper->getContact($email);
+        $customer =  null;
+        try{
+            $customer = $infusionsoftHelper->getContact($email);
+        }catch(\Exception $e){
+            Log::error($e->getMessage());
+            return new ApiResponse("An error occured", false);
+        }
 
         if($customer == null){
-            return new ApiResponse($customer, "Customer not found", 404);
+            return new ApiResponse("Customer not found", false, 404);
         }
 
-        $courses = $this->getCustomerCourses($customer);
+        $courses = null;
+        try{        
+            $courses = $this->getCustomerCourses($customer); //returns array of strings
+        }catch(\Exception $e){
+            Log::error($e->getMessage());
+            return new ApiResponse("An error occured", false);
+        }
 
         if($courses == null){
-            return new ApiResponse($customer, "Customer has no orders");
+            return new ApiResponse("Customer has no orders", false);
         }
+
         //you might need to fetch each course from the database depending on if its a list of ids
-        
         $started = false; //assume customer has not taken any module -> to help us set 
         $total_number_of_courses = sizeof($courses); //Test
         $total_number_of_completed_courses = 0;
         $last_completed_course = null; //we will set this to true if a course is found to be completed : all its modules taken or last module taken
+
         foreach ($courses as $course) {
             //if each course had a completed flag it would really optimize this process
             //if($course->completed){ continue; }
-            $modules = $course->modules;
-            //you might need to fetch each course from the database depending on if its a list of ids
+            $modules =  null;
+            try{
+                $modules = Module::where('course_key', $course)->get(); //$course->modules;
+            }catch(\Exception $e){
+                Log::error($e->getMessage());
+                return new ApiResponse("An error occured", false);
+            }
+            //you might need to fetch each module from the database depending on if its a list of ids
             if($modules == null){
                 continue; //dont crash because the list is empty
             }
@@ -84,9 +112,15 @@ class ReminderTagger{
                     //if we get here then module n was completed but module n+1  was not completed
                     //so lets tag the customer for this
                     if($next_uncompleted_module){
-                        $tag = $this->getTag($next_uncompleted_module, $course);
-                        $customer = $this->setTag($customer, $tag);
-                        return $customer; //Stop all processing and return the tagged customer
+                        try{
+                            $tag = $this->getTag($next_uncompleted_module, $course);
+                            $customer = $this->setTag($customer, $tag);
+                        }catch(\Exception $e){
+                            Log::error($e->getMessage());
+                            return new ApiResponse("An error occured", false);
+                        }
+                        return new ApiResponse("Reminder set successfully", true);
+                        //Stop all processing and return the tagging result 
                     }
                 }
                 $uncompleted_module_count++;
@@ -98,29 +132,65 @@ class ReminderTagger{
             if($uncompleted_module_count == $module_count){
                 //This means the customer has not started this course
                 //If no modules are completed it should attach first tag in order
-                $tag = $this->getFirstTag();
-                $customer = $this->setTag($customer, $tag);
-                return $customer; //Stop all processing and return the tagged customer
+                try{
+                    $tag = $this->getFirstTag();
+                    $customer = $this->setTag($customer, $tag);
+                }catch(\Exception $e){
+                    Log::error($e->getMessage());
+                    return new ApiResponse("An error occured", false);
+                }
+                return new ApiResponse("Reminder set successfully", true); //Stop all processing and return the result
+                
             }
             $uncompleted_module_count = 0; //reset so that we can start afresh for the next set of modules
             $next_uncompleted_module = null; //reset so that we can start afresh for the next set of modules
         }
         //if we get here evert module was completed in every course
-        $tag = $this->getCompletionTag();
-        $customer = $this->setTag($customer, $tag);
-        return $customer; //Stop all processing and return the tagged customer
+        try{
+            $tag = $this->getCompletionTag();
+            $customer = $this->setTag($customer, $tag);        
+        }catch(\Exception $e){
+            Log::error($e->getMessage());
+            return new ApiResponse("An error occured", false);
+        }
+        return new ApiResponse("Reminder set successfully", true); //Stop all processing and return the result
     }
 
     public function getCompletionTag(){
-        return $infusionsoftHelper->getAllTags()->where('name', "Module reminders completed")->first(); //Test
+        $exists = Tag::where('id', '>', 0)->exist();
+        if(!$exists){
+            //fetch and save
+            $this->downloadAndSaveTags();
+        }
+        $tag = Tag::where('name', "Module reminders completed")->first();
+        return $tag;
+        //return $getAllTags()->where('name', "Module reminders completed")->first(); //Test
+    }
+
+    public function downloadAndSaveTags(){
+        try{
+            $tags = $infusionsoftHelper->getAllTags();
+            foreach ($tags as $tag) {
+                $t = new Tag();
+                $t->id = $tag->id;
+                $t->name = $tag->name;
+                $t->save();
+            }
+        }catch(\Exception $e){
+
+        }
     }
 
     public function getFirstTag(){
-        return $infusionsoftHelper->getAllTags()->first(); //Test
+        if(!$exists){
+            //fetch and save
+            $this->downloadAndSaveTags();
+        }
+        return Tag::where('id', '>', 0)->first(); //Test
     }
 
-    public function getTag($module){
-        $infusionsoftHelper->addTag($customer->id, $tag->id);                                        
+    public function getStartTag($module){
+                                           
     }
 
     public function setTag($customer, $tag){
