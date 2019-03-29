@@ -16,7 +16,7 @@ class ApiController extends Controller
     }
     // Todo: Module reminder assigner
     private function reminderAssigner($customer_email){
-
+        return $reminderTagger->setReminderTag($customer_email);
     }
 
     private function exampleCustomer(){
