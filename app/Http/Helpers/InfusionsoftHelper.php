@@ -6,9 +6,8 @@ use Infusionsoft;
 use Log;
 use Storage;
 use Request;
-use App\Http\Interfaces\InfusionSoftHelperInterface;
 
-class InfusionsoftHelper implements InfusionSoftHelperInterface
+class InfusionsoftHelper 
 {
     private $infusionsoft;
 
@@ -25,6 +24,7 @@ class InfusionsoftHelper implements InfusionSoftHelperInterface
 
     public function authorize(){
         if (Request::has('code')) {
+            var_dump("Code returned");
             Infusionsoft::requestAccessToken(Request::get('code'));
 
             Storage::put('inf_token', serialize(Infusionsoft::getToken()));
