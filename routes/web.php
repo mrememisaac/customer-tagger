@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'HomeController@welcome'); 
 
 Auth::routes();
 
@@ -24,6 +22,8 @@ Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
 
 Route::get('/authorize_infusionsoft', 'InfusionsoftController@authorizeInfusionsoft')->name('infusionsoft.authorize');
+Route::post('/authorize_infusionsoft', 'InfusionsoftController@authorizeInfusionsoft')->name('infusionsoft.authorize');
+Route::get('/create_contact', 'InfusionsoftController@testInfusionsoftIntegrationCreateContact');
 
 Route::get('/infusionsoft_test_get_by_email/{email}', 'InfusionsoftController@testInfusionsoftIntegrationGetEmail')->name('api.infusionsoft_test_email');
 Route::get('/infusionsoft_test_add_tag/{contact_id}/{tag_id}', 'InfusionsoftController@testInfusionsoftIntegrationAddTag')->name('api.infusionsoft_test_tag');
