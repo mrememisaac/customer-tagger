@@ -39,7 +39,7 @@ class InfusionsoftController extends Controller
         $infusionsoft = new InfusionsoftHelper();
 
         return Response::json($infusionsoft->createContact([
-            'Email' => uniqid().'@test.com',
+            'Email' => 'isaacemem@gmail.com',
             "_Products" => 'ipa,iea'
         ]));
     }
