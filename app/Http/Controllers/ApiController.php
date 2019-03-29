@@ -9,14 +9,11 @@ use Response;
 
 class ApiController extends Controller
 {
-    private $reminderTagger;
-
-    public function __constructor(ReminderTagger $tagger){
-        $this->reminderTagger = $tagger;
-    }
+   
     // Todo: Module reminder assigner
-    private function reminderAssigner($customer_email){
-        return $reminderTagger->setReminderTag($customer_email);
+    public function reminderAssigner(Request $request, $contact_email){
+        $tagger = new ReminderTagger(new InfusionsoftHelper());
+        return $tagger->setReminderTag($contact_email);
     }
 
     private function exampleCustomer(){
