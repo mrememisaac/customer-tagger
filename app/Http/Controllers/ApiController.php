@@ -3,12 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Helpers\InfusionsoftHelper;
+use App\Http\Helpers\ReminderTagger;
 use Illuminate\Http\Request;
 use Response;
 
 class ApiController extends Controller
 {
+    private $reminderTagger;
+
+    public function __constructor(ReminderTagger $tagger){
+        $this->reminderTagger = $tagger;
+    }
     // Todo: Module reminder assigner
+    private function reminderAssigner($customer_email){
+
+    }
 
     private function exampleCustomer(){
 
