@@ -15,12 +15,14 @@ class CreateUserCompletedModulesTable extends Migration
     {
         Schema::create('user_completed_modules', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('user_id');
-            $table->integer('module_id');
-            $table->timestamps();
 
-            $table->foreign('user_id')->reference('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('module_id')->reference('id')->on('modules')->onUpdate('cascade')->onDelete('cascade');
+            $table->integer('user_id')->unsigned();
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
+
+            $table->integer('module_id')->unsigned();
+            $table->foreign('module_id')->references('id')->on('modules')->onUpdate('cascade')->onDelete('cascade');
+
+            $table->timestamps();
         });
     }
 
@@ -31,6 +33,6 @@ class CreateUserCompletedModulesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_completed_modules');
+        Schema::dropIfExists('user_modules');
     }
 }
