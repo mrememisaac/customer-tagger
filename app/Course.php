@@ -12,7 +12,7 @@ class Course extends Model
     ];
 
     public function modules(){
-        return $this->hasMany('App\Comment', 'course_key', 'course_key');
+        return $this->hasMany('App\Module', 'course_key', 'course_key');
     }
 }
 
