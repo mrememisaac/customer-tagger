@@ -1,9 +1,11 @@
 <?
 
+namespace App\Http\Helpers;
+
 class ApiResponse{
-    public function __constructor($customer, $message, $code = null){
-        $this->customer =  $customer;
+    public function __constructor($message, $successful, $code = null){
         $this->message = $message;
+        $this->success = $success;
         $this->code = $code;
     }
 }
