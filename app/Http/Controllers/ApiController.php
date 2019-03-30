@@ -2,17 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Interfaces\InfusionSoftHelperInterface;
+
+use App\Http\Helpers\MockInfusionsoftHelper;
 use App\Http\Helpers\InfusionsoftHelper;
 use App\Http\Helpers\ReminderTagger;
 use Illuminate\Http\Request;
 use Response;
+use App;
 
 class ApiController extends Controller
 {
    
+    public function __constructor(){
+        App:bind('App\Http\Interfaces\InfusionSoftHelperInterface', 'App\Http\Helpers\MockInfusionsoftHelper');
+    }
     // Todo: Module reminder assigner
     public function reminderAssigner(Request $request, $contact_email){
-        $tagger = new ReminderTagger(new InfusionsoftHelper());
+        $tagger = new ReminderTagger(new MockInfusionsoftHelper());
         return $tagger->setReminderTag($contact_email);
     }
 
