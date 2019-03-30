@@ -12,6 +12,7 @@ use \App\User;
 use App\Contact;
 use \App\Course;
 use \App\Module;
+use \App\UserCompletedModule;
 use App\Http\Interfaces\InfusionSoftHelperInterface;
 use App\Http\Helpers\ApiResponse;
 
@@ -19,8 +20,8 @@ class ReminderTagger{
 
     private $infusionsoftHelper;
 
-    public function __construct(InfusionSoftHelper $helper){
-        $this->infusionsoftHelper = $helper;
+    public function __construct(InfusionSoftHelperInterface $helper = null){
+        $this->infusionsoftHelper = $helper == null ? new MockInfusionsoftHelper() : $helper;
     } 
 
 
@@ -28,7 +29,7 @@ class ReminderTagger{
      * Returns courses bought by this customer
      * I brought this out to its own function because the way we get courses ie products might change, 
      */
-    public function getCustomerCourses($customer){
+    private function getCustomerCourses($customer){
         //returns array of strings
         // if($customer == null) {
         //     return null;
@@ -40,11 +41,11 @@ class ReminderTagger{
                 return explode(',',$customer->_Products);
             }
         }catch(\Exception $e){
-            Log::error($e->getMessage() . " on line " . $e->line);
+            Log::error($e->getMessage() . " on line " . __LINE__);
         }
     }
 
-    public function apiResponse($msg, $successful, $code = null){
+    private function apiResponse($msg, $successful, $code = null){
         return[
             'message' => $msg,
             'success' => $successful
@@ -65,10 +66,9 @@ class ReminderTagger{
                 $customer =  new Contact($customer);
             }
         }catch(\Exception $e){
-            Log::error($e->getMessage() . " on line " . $e->line);
-            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+            Log::error($e->getMessage() . " on line " . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
         }
-
         if($customer == null){
             return $this->apiResponse("Customer not found", false, 404);
         }
@@ -77,10 +77,9 @@ class ReminderTagger{
         try{        
             $courses = $this->getCustomerCourses($customer); //returns array of strings
         }catch(\Exception $e){
-            Log::error($e->getMessage() . " on line " . $e->line);
-            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+            Log::error($e->getMessage() . " on line " . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
         }
-
         if($courses == null){
             return $this->apiResponse("Customer has no orders", false);
         }
@@ -92,14 +91,15 @@ class ReminderTagger{
         $last_completed_course = null; //we will set this to true if a course is found to be completed : all its modules taken or last module taken
 
         foreach ($courses as $course) {
+            $course = trim($course);
             //if each course had a completed flag it would really optimize this process
             //if($course->completed){ continue; }
             $modules =  null;
             try{
                 $modules = $this->getModule($course); 
             }catch(\Exception $e){
-                Log::error($e->getMessage() . " on line " . $e->line);
-                return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+                Log::error($e->getMessage() . " on line " . __LINE__);
+                return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
             }
             //you might need to fetch each module from the database depending on if its a list of ids
             if($modules == null){
@@ -116,7 +116,7 @@ class ReminderTagger{
                 if($i > 0){
                     $next_module = $modules[$i-1]; //we get a handle on the previous module because the current  the one before this one 
                 }
-                if($module != null and $module->completed){
+                if($module != null and $this->moduleCompleted($module, $customer)){
                     $started = true;
 
                     if($i == $module_count-1){//if the last module has been completed
@@ -132,10 +132,10 @@ class ReminderTagger{
                             $tag = $this->getTag($this->constructTagName($next_uncompleted_module));
                             $customer = $this->setTag($customer, $tag);
                         }catch(\Exception $e){
-                            Log::error($e->getMessage() . " on line " . $e->line);
-                            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+                            Log::error($e->getMessage() . " on line " . __LINE__);
+                            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                         }
-                        return $this->apiResponse("Reminder set successfully", true);
+                        return $this->apiResponse($tag->name . " set successfully for customer id " . $customer->Id, true);
                         //Stop all processing and return the tagging result 
                     }
                 }
@@ -152,10 +152,10 @@ class ReminderTagger{
                     $tag = $this->getTag($this->constructTagName($module));
                     $customer = $this->setTag($customer, $tag);
                 }catch(\Exception $e){
-                    Log::error($e->getMessage() . " on line " . $e->line);
-                    return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+                    Log::error($e->getMessage() . " on line " . __LINE__);
+                    return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                 }
-                return $this->apiResponse("Reminder set successfully", true); //Stop all processing and return the result
+                return $this->apiResponse($tag->name . " set successfully for customer id " . $customer->Id, true); //Stop all processing and return the result
                 
             }
             $uncompleted_module_count = 0; //reset so that we can start afresh for the next set of modules
@@ -164,16 +164,15 @@ class ReminderTagger{
         //if we get here evert module was completed in every course
         try{
             $tag = $this->getCompletionTag();
-            return $tag;
             $customer = $this->setTag($customer, $tag);        
         }catch(\Exception $e){
-            Log::error($e->getMessage() . " on line " . $e->line);
-            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . $e->line, false);
+            Log::error($e->getMessage() . " on line " . __LINE__);
+            return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
         }
-        return $this->apiResponse("Reminder set successfully", true); //Stop all processing and return the result
+        return $this->apiResponse($tag->name ." set successfully for customer id " . $customer->Id, true); //Stop all processing and return the result
     }
 
-    public function getModule($course){
+    private function getModule($course){
         
         $module = Cache::remember($course, 1440, function() use($course){
             return Module::where('course_key', $course)->get();
@@ -181,17 +180,17 @@ class ReminderTagger{
         return $module;
     }
 
-    public function constructTagName($module){
+    private function constructTagName($module){
         return "Start " . $module->name . " Reminders";
     }
 
     
-    public function getCompletionTag(){        
+    private function getCompletionTag(){        
         $tag = $this->getTag("Module reminders completed");
         return $tag;
     }
 
-    public function getTag($tagName){
+    private function getTag($tagName){
         if(!$this->tagsDownloaded()){
             //fetch and save
             $this->downloadAndSaveTags();
@@ -203,7 +202,7 @@ class ReminderTagger{
         return $tag;
     }    
 
-    public function downloadAndSaveTags(){
+    private function downloadAndSaveTags(){
         try{
             $tags = $this->infusionsoftHelper->getAllTags();
             $tags = json_decode($tags);
@@ -214,18 +213,36 @@ class ReminderTagger{
                 $t->save();
             }
         }catch(\Exception $e){
-            Log::error($e->getMessage() . " on line " . $e->line);
+            Log::error($e->getMessage() . " in downloadAndSaveTags");
         }
     }
 
-    public function tagsDownloaded(){
+    private function tagsDownloaded(){
         $exists = Cache::remember('tags_exist', 1440, function(){
             return Tag::where('id', '>', 0)->count() > 0;
         });
+        return $exists;
     }
    
-    public function setTag($customer, $tag){
-        $this->infusionsoftHelper->addTag($customer->Id, $tag->id);                                        
+    private function setTag($customer, $tag){
+        try{
+            return $this->infusionsoftHelper->addTag($customer->Id, $tag->id);                                        
+        }catch(\Exception $e){
+            Log::error($e->getMessage() . " in setTag");
+            return $e;
+        }
+    }
+
+    private function moduleCompleted($module, $customer){
+        try{
+            $cache_key = 'UCM' . $module->id . $customer->Id;
+            $completed = Cache::remember($cache_key, 1440, function() use($module, $customer){
+                return UserCompletedModule::where('email', $customer->Email)->where('module_id', $module->id)->count() > 0;
+            });
+            return $completed;
+        }catch(\Exception $e){
+            Log::error($e->getMessage() . " in moduleCompleted");
+        }
     }
 }
 
