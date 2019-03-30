@@ -1,12 +1,12 @@
-<?
+<?php
 
 namespace App\Http\Helpers;
 
-use App\Http\Interfaces\InfusionSoftHelperInterface;
 use App\Tag;
 use App\Contact;
+use App\Http\Interfaces\InfusionsoftHelperInterface;
 
-class MockInfusionSoftHelper implements InfusionSoftHelperInterface
+class MockInfusionsoftHelper implements InfusionsoftHelperInterface
 {
     public function getAllTags(){
         return Tag::all();
@@ -14,7 +14,10 @@ class MockInfusionSoftHelper implements InfusionSoftHelperInterface
 
     public function getContact($email){
         $contact = Contact::where('Email', $email)->first();
-        return $contact;
+        if($contact == null){
+            return null;
+        }
+        return [ 'Id' => $contact->Id, 'Email' => $contact->Email, '_Products' => $contact->_Products, 'Groups' => $contact->Groups];
     }
 
     public function getContactById($contact_id){
@@ -26,8 +29,13 @@ class MockInfusionSoftHelper implements InfusionSoftHelperInterface
     }
 
     public function addTag($contact_id, $tag_id){
-        $contact = $this->getContact($contact_id);
-        $contact->tag = $this->getTag($tag_id);
+        $contact = $this->getContactById($contact_id);
+        $tag =  $this->getTagById($tag_id);
+        if($tag != null){
+            $contact->Groups = $tag->name;
+            $contact->save();
+        }
+        return $contact;
     }
 
     public function createContact($contact){
