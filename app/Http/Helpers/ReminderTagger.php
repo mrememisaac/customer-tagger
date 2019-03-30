@@ -135,7 +135,7 @@ class ReminderTagger{
                             Log::error($e->getMessage() . " on line " . __LINE__);
                             return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                         }
-                        return $this->apiResponse($tag->name . " set successfully for customer id " . $customer->Id, true);
+                        return $this->apiResponse($tag->name , true);
                         //Stop all processing and return the tagging result 
                     }
                 }
@@ -155,7 +155,7 @@ class ReminderTagger{
                     Log::error($e->getMessage() . " on line " . __LINE__);
                     return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                 }
-                return $this->apiResponse($tag->name . " set successfully for customer id " . $customer->Id, true); //Stop all processing and return the result
+                return $this->apiResponse($tag->name , true); //Stop all processing and return the result
                 
             }
             $uncompleted_module_count = 0; //reset so that we can start afresh for the next set of modules
@@ -169,7 +169,7 @@ class ReminderTagger{
             Log::error($e->getMessage() . " on line " . __LINE__);
             return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
         }
-        return $this->apiResponse($tag->name ." set successfully for customer id " . $customer->Id, true); //Stop all processing and return the result
+        return $this->apiResponse($tag->name , true); //Stop all processing and return the result
     }
 
     private function getModule($course){
