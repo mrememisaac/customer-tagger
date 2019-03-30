@@ -21,7 +21,6 @@ class CreateUserCompletedModulesTable extends Migration
 
             $table->integer('module_id')->unsigned();
             $table->foreign('module_id')->references('id')->on('modules')->onUpdate('cascade')->onDelete('cascade');
-
             $table->timestamps();
         });
     }
@@ -33,6 +32,6 @@ class CreateUserCompletedModulesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_modules');
+        Schema::dropIfExists('user_completed_modules');
     }
 }
