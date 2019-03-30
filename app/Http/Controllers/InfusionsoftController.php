@@ -43,4 +43,18 @@ class InfusionsoftController extends Controller
             "_Products" => 'ipa,iea'
         ]));
     }
+
+    public function CreateTestContacts(){
+
+        $infusionsoft = new InfusionsoftHelper();
+
+        $first =  Response::json($infusionsoft->createContact([
+            'Email' => 'iea-as-firstcourse@gmail.com',
+            "_Products" => 'iea,ipa'
+        ]));
+        $second =  Response::json($infusionsoft->createContact([
+            'Email' => 'iaa-as-firstcourse@gmail.com',
+            "_Products" => 'iaa'
+        ]));
+    }
 }
