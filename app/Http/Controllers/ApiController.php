@@ -19,6 +19,7 @@ class ApiController extends Controller
     }
     // Todo: Module reminder assigner
     public function reminderAssigner(Request $request, $contact_email){
+        // $tagger = new ReminderTagger(new InfusionsoftHelper()); //Commented out to use my mock
         $tagger = new ReminderTagger(new MockInfusionsoftHelper());
         return $tagger->setReminderTag($contact_email);
     }
