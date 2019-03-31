@@ -16,63 +16,61 @@ class UserCompletedModulesTableSeeder extends Seeder
         UserCompletedModule::create(
             [
                 'user_id' => 4,
-                'module_id' => 1//Module::where('name', 'like', '%'. 'IPA Module 1' . '%')->first()->id
+                'module_id' => 1
             ]);
         UserCompletedModule::create(
             
             [
                 'user_id' => 5,
-                'module_id' => 2 //Module::where('name', 'like', '%'. 'IPA Module 1' . '%')->first()->id
+                'module_id' => 2 
             ]);
         UserCompletedModule::create(
             
             [
                 'user_id' => 5,
-                'module_id' => 3 //Module::where('name', 'like', '%'. 'IPA Module 3' . '%')->first()->id
+                'module_id' => 3 
             ]);
         UserCompletedModule::create(
             
             [
                 'user_id' => 6,
-                'module_id' => 19 //Module::where('name', 'like', '%'. 'IPA Module 7' . '%')->first()->id
+                'module_id' => 19 
             ]);
         UserCompletedModule::create(
             [
                 'user_id' => 7,
-                'module_id' => 19 //Module::where('name', 'like', '%'. 'IPA Module 7' . '%')->first()->id
+                'module_id' => 19 
             ]);
         UserCompletedModule::create(
             [
                 'user_id' => 7,
-                'module_id' => 20 //Module::where('name', 'like', '%'. 'IEA Module 7' . '%')->first()->id
+                'module_id' => 20 
             ]
         );
-        /*UserCompletedModule::create([
+        UserCompletedModule::create(
             [
-                'user_id' => 4,
-                'module_id' => 1//Module::where('name', 'like', '%'. 'IPA Module 1' . '%')->first()->id
-            ],
-            [
-                'user_id' => 5,
-                'module_id' => 2 //Module::where('name', 'like', '%'. 'IPA Module 1' . '%')->first()->id
-            ],
-            [
-                'user_id' => 5,
-                'module_id' => 3 //Module::where('name', 'like', '%'. 'IPA Module 3' . '%')->first()->id
-            ],
-            [
-                'user_id' => 6,
-                'module_id' => 19 //Module::where('name', 'like', '%'. 'IPA Module 7' . '%')->first()->id
-            ],
-            [
-                'user_id' => 7,
-                'module_id' => 19 //Module::where('name', 'like', '%'. 'IPA Module 7' . '%')->first()->id
-            ],
-            [
-                'user_id' => 7,
-                'module_id' => 20 //Module::where('name', 'like', '%'. 'IEA Module 7' . '%')->first()->id
+                'user_id' => 8,
+                'module_id' => 1 
             ]
-        ]);*/
+        );
+        UserCompletedModule::create(
+            [
+                'user_id' => 8,
+                'module_id' => 2 
+            ]
+        );
+        UserCompletedModule::create(
+            [
+                'user_id' => 9,
+                'module_id' => 19 
+            ]
+        );
+        UserCompletedModule::create(
+            [
+                'user_id' => 9,
+                'module_id' => 15
+            ]
+        );
        
     }
 }

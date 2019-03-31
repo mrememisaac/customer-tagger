@@ -55,6 +55,18 @@ class UsersTableSeeder extends Seeder
                 'email' => 'has-completed-last-module-of-all-courses@gmail.com',
                 'password' => 'ipa,iea',
                 'name' => 'Emem Isaac',
+            ],
+            [
+                'id' => 8,
+                'email' => 'has-completed-first-two-courses@gmail.com',
+                'password' => 'ipa,iea,iaa',
+                'name' => 'Emem Isaac',
+            ],
+            [
+                'id' => 9,
+                'email' => 'has-completed-last-ipa-and-5th-iaa@gmail.com',
+                'password' => 'ipa,iaa',
+                'name' => 'Emem Isaac',
             ]
         ]);
     }

@@ -47,6 +47,16 @@ class ContactsTableSeeder extends Seeder
                 'Id' => 7,
                 'Email' => 'has-completed-last-module-of-all-courses@gmail.com',
                 '_Products' => 'ipa, iea',
+            ],
+            [
+                'Id' => 8,
+                'Email' => 'has-completed-first-of-both-modules@gmail.com',
+                '_Products' => 'ipa,iea',
+            ],
+            [
+                'Id' => 9,
+                'Email' => 'has-completed-last-ipa-and-5th-iaa@gmail.com',
+                '_Products' => 'ipa,iaa',
             ]
         ]);
     }
