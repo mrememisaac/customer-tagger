@@ -67,6 +67,12 @@ class UsersTableSeeder extends Seeder
                 'email' => 'has-completed-last-ipa-and-5th-iaa@gmail.com',
                 'password' => 'ipa,iaa',
                 'name' => 'Emem Isaac',
+            ],
+            [
+                'id' => 10,
+                'email' => 'has-no-courses@gmail.com',
+                'password' => 'ipa,iaa',
+                'name' => 'Emem Isaac',
             ]
         ]);
     }
