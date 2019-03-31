@@ -62,7 +62,7 @@ class ReminderTaggerTest extends TestCase
     }
     public function test_verify_customer_with_no_courses_returns_customer_has_no_orders_and_false()
     {
-        $this->post("/api/module_reminder_assigner/imaginary@gmail.com")
+        $this->post("/api/module_reminder_assigner/has-no-courses@gmail.com")
         ->assertJson(['message' => 'Customer has no orders', 'success' => false]);
     }
 }
