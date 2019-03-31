@@ -110,42 +110,41 @@ class ReminderTagger{
             $uncompleted_module_count = 0;
             
             //start from the end since we need the last completed module to determine the next module
+            //beginning from -2 bcause we already know that the last module is not treated
             for( $i = $module_count -1; $i >= 0; $i--){ //$i > 0 would means it wont reach the last item
                 /** Convert this into a function if u can */
                 $module = $modules[$i]; //current module
-                if($i > 0){
-                    $next_module = $modules[$i-1]; //we get a handle on the previous module because the current  the one before this one 
-                }
                 if($module != null and $this->moduleCompleted($module, $customer)){
-                    $started = true;
-
-                    if($i == $module_count-1){//if the last module has been completed
-                        $last_completed_course = $course; //why are we doing this? //we should store it maybe
-                        $total_number_of_completed_courses++;
-                         //according to the rules, since the last module has been treated, we have to move on to the next course
+                    if($i == $module_count -1){
                         break;
                     }
-                    //if we get here then module n was completed but module n+1  was not completed
-                    //so lets tag the customer for this
+                   
+                    
                     if($next_uncompleted_module){
+                        //if we get here that means we have found the first uncompleted lesson in this course
+                        //so lets tag the customer for this
                         try{
                             $tag = $this->getTag($this->constructTagName($next_uncompleted_module));
                             $customer = $this->setTag($customer, $tag);
+                            //Stop all processing and return the tagging result 
+                            return $this->apiResponse($tag->name , true);
                         }catch(\Exception $e){
                             Log::error($e->getMessage() . " on line " . __LINE__);
                             return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                         }
-                        return $this->apiResponse($tag->name , true);
-                        //Stop all processing and return the tagging result 
                     }
                 }
-                $uncompleted_module_count++;
+                //if we get here that means that the current module has not been completed
+                //so it becomes the next uncompleted module
                 //if the current module is not completed, lets take note, cause the next might be
                 //in which case this one becomes the one for the reminder
                 $next_uncompleted_module = $module;
-            }
-            //If we get here then no module was completed in this course
+                $uncompleted_module_count++;
+            
+            }//end of modules loop
+
             if($uncompleted_module_count == $module_count){
+                //If we get here then no module was completed in this course
                 //This means the customer has not started this course
                 //If no modules are completed it should attach first tag in order
                 try{
@@ -156,24 +155,25 @@ class ReminderTagger{
                     return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
                 }
                 return $this->apiResponse($tag->name , true); //Stop all processing and return the result
-                
             }
             $uncompleted_module_count = 0; //reset so that we can start afresh for the next set of modules
             $next_uncompleted_module = null; //reset so that we can start afresh for the next set of modules
-        }
-        //if we get here evert module was completed in every course
+        
+        }//end of course loop
+        
+        //if we get here every module was completed in every course
+        //or the last module of every course was completed
         try{
             $tag = $this->getCompletionTag();
-            $customer = $this->setTag($customer, $tag);        
+            $customer = $this->setTag($customer, $tag);  
+            return $this->apiResponse($tag->name , true); //Stop all processing and return the result
         }catch(\Exception $e){
             Log::error($e->getMessage() . " on line " . __LINE__);
             return $this->apiResponse("An error occured " . $e->getMessage() . " on line " . __LINE__, false);
         }
-        return $this->apiResponse($tag->name , true); //Stop all processing and return the result
     }
 
     private function getModule($course){
-        
         $module = Cache::remember($course, 1440, function() use($course){
             return Module::where('course_key', $course)->get();
         });
@@ -233,11 +233,25 @@ class ReminderTagger{
         }
     }
 
+    private function getUser($contact){
+        try{
+            $cache_key = 'user' . $contact->Id;
+            $contact->Email = trim($contact->Email);
+            $user = Cache::remember($cache_key, 1440, function() use($contact){
+                return User::where('email', 'like', '%' . $contact->Email . '%')->first();
+            });
+            return $user;
+        }catch(\Exception $e){
+            Log::error($e->getMessage() . " in getUser");
+        }
+    }
+
     private function moduleCompleted($module, $customer){
         try{
-            $cache_key = 'UCM' . $module->id . $customer->Id;
-            $completed = Cache::remember($cache_key, 1440, function() use($module, $customer){
-                return UserCompletedModule::where('email', $customer->Email)->where('module_id', $module->id)->count() > 0;
+            $cache_key = 'u_c_m' . $module->id . $customer->Id;
+            $user = $this->getUser($customer);
+            $completed = Cache::remember($cache_key, 1440, function() use($module, $user){
+                return UserCompletedModule::where('user_id', $user->id)->where('module_id', $module->id)->count();
             });
             return $completed;
         }catch(\Exception $e){
